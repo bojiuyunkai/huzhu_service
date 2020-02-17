@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package pb;
+
+service Msgsvc {
+    
+    rpc Echo (EchoRequest) returns (EchoReply) {
+    }
+
+    rpc SayHello (SayHelloRequest) returns (SayHelloReply) {
+    }
+}
+
+message EchoRequest {
+    string word = 1;
+}
+
+message EchoReply {
+    int32 Code=1;
+    string rs = 2;
+    string err = 3;
+}
+
+message SayHelloRequest {
+    string saidword = 1;
+    string want = 2;
+}
+
+message SayHelloReply {
+     int32 Code=1;
+    string rs = 2;
+    string err = 3;
+}
