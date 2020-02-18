@@ -5,10 +5,29 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	service "huzhu_service/pkg/svc/message"
-	pb "huzhu_service/pb"
+	//pb "huzhu_service/pb"
 	"huzhu_service/pkg/endpoints"
+	// "fmt"
 )
+// Endpoints collects all of the endpoints that compose the addsvc service. It's
+// meant to be used as a helper struct, to collect all of the endpoints into a
+// single parameter.
+type Endpoints struct {
+	EchoEndpoint    endpoint.Endpoint `json:""`
+	SayHelloEndpoint endpoint.Endpoint `json:""`
+}
 
+
+// New return a new instance of the endpoint that wraps the provided service.
+func New(svc service.MsgsvcService, logger log.Logger ) (ep Endpoints) {
+	
+	var echoEndpoint endpoint.Endpoint = NewEchoEndpoint(svc,logger);
+	ep.EchoEndpoint = echoEndpoint
+
+	var sayhelloEndpoint endpoint.Endpoint = NewSayHelloEndpoint(svc,logger);
+	ep.SayHelloEndpoint = sayhelloEndpoint;
+	return ep
+}
 func NewEchoEndpoint(svc service.MsgsvcService, logger log.Logger) endpoint.Endpoint{
 	var echoEndpoint endpoint.Endpoint
 	method := "echo"
@@ -31,19 +50,13 @@ func NewSayHelloEndpoint(svc service.MsgsvcService, logger log.Logger) endpoint.
 // Primarily useful in a server.
 func MakeEchoEndpoint(svc service.MsgsvcService) (ep endpoint.Endpoint) {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(*pb.EchoRequest)
-		rs, err := svc.Echo(ctx, req.Word)
-		if err!=nil {
-			return &pb.EchoReply{
-				Code: 500,
-				Err:  err.Error(),
-			}, nil
+		req := request.(EchoRequest)
+		if err := req.validate(); err != nil {
+			return EchoResponse{}, err
 		}
-		return &pb.EchoReply{
-				Code: 200,
-				Err:  "",
-				Rs:rs,
-			}, nil
+		
+		rs, err := svc.Echo(ctx, req.Word)
+		return EchoResponse{Rs: rs}, err
 	}
 }
 
@@ -51,20 +64,13 @@ func MakeEchoEndpoint(svc service.MsgsvcService) (ep endpoint.Endpoint) {
 // Primarily useful in a server.
 func MakeSayHelloEndpoint(svc service.MsgsvcService) (ep endpoint.Endpoint) {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(*pb.SayHelloRequest)
+		req := request.(SayHelloRequest)
 		
-		rs, err := svc.SayHello(ctx, req.Saidword,req.Want)
-		if err!=nil {
-			return &pb.SayHelloReply{
-				Code: 500,
-				Err:  err.Error(),
-			}, nil
+		if err := req.validate(); err != nil {
+			return SayHelloResponse{}, err
 		}
-		return &pb.SayHelloReply{
-				Code: 200,
-				Err:  "",
-				Rs:rs,
-			}, nil
+		rs, err := svc.SayHello(ctx, req.Saidword, req.Want)
+		return SayHelloResponse{Rs: rs}, err
 	}
 }
 
