@@ -1,3 +1,4 @@
+//通用健康检查，使用谷歌健康策略
 package svc
 
 import (

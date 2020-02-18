@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"google.golang.org/grpc/status"
-	service "huzhu_service/pkg/svc"
+	service "huzhu_service/pkg/svc/add"
 
 )
 

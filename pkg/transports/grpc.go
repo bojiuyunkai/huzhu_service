@@ -1,19 +1,16 @@
 package transports
 import (
-	
-	
-
-
 	"github.com/go-kit/kit/log"
 	
 	grpctransport "github.com/go-kit/kit/transport/grpc"
-	"github.com/go-kit/kit/endpoint"
-	"google.golang.org/grpc"
+	//"github.com/go-kit/kit/endpoint"
+	//"google.golang.org/grpc"
 	
-	service "huzhu_service/pkg/svc"
-	 "huzhu_service/pb"
-
-	"huzhu_service/pkg/endpoints"
+	 addtransports "huzhu_service/pkg/transports/add"
+	 msgtransports "huzhu_service/pkg/transports/message"
+	 
+	 //"huzhu_service/pb"
+	 //service "huzhu_service/pkg/svc/add"
 
 )
 
@@ -26,35 +23,15 @@ func MakeGRPCServer(logger log.Logger) (*GrpcServer) { // Zipkin GRPC Server Tra
 	options := []grpctransport.ServerOption{
 		grpctransport.ServerErrorLogger(logger),
 	}
-	addsvc:= service.NewAddSvc(logger);//svc add 对象
-	msgsvc:= service.NewMsgSvc(logger);//svc msg 对象
+	addHandlers:=addtransports.NewGrpcHandler(logger,options);
+	msgHandlers:= msgtransports.NewGrpcHandler(logger,options);
+	
 
 	return &GrpcServer{
-		sum: grpctransport.NewServer(
-			endpoints.NewSumEndpoint(addsvc,logger),
-			decodeGRPCSumRequest,
-			encodeGRPCSumResponse,
-			options...,
-		),
-
-		concat: grpctransport.NewServer(
-			endpoints.NewConcatEndpoint(addsvc,logger),
-			decodeGRPCConcatRequest,
-			encodeGRPCConcatResponse,
-			options...,
-		),
-		echo: grpctransport.NewServer(
-			endpoints.NewEchoEndpoint(msgsvc,logger),
-			decodeGRPCEchoRequest,
-			encodeGRPCEchoResponse,
-			options...,
-		),
-		sayhello:grpctransport.NewServer(
-			endpoints.NewSayHelloEndpoint(msgsvc,logger),
-			decodeGRPCSayHelloRequest,
-			encodeGRPCEchoResponse,
-			options...,
-		),
+		sum: addHandlers["sum"],
+		concat: addHandlers["concat"],
+		echo: msgHandlers["echo"],
+		sayhello:msgHandlers["sayhello"],
 
 	}
 }
@@ -62,7 +39,7 @@ func MakeGRPCServer(logger log.Logger) (*GrpcServer) { // Zipkin GRPC Server Tra
 // NewGRPCClient returns an AddService backed by a gRPC server at the other end
 // of the conn. The caller is responsible for constructing the conn, and
 // eventually closing the underlying transport. We bake-in certain middlewares,
-// implementing the client library pattern.
+/*// implementing the client library pattern.
 func NewGRPCClient(conn *grpc.ClientConn,  logger log.Logger) service.AddsvcService { // We construct a single ratelimiter middleware, to limit the total outgoing
 	// QPS from this client to all methods on the remote instance. We also
 	// construct per-endpoint circuitbreaker middlewares to demonstrate how
@@ -118,6 +95,6 @@ func NewGRPCClient(conn *grpc.ClientConn,  logger log.Logger) service.AddsvcServ
 		SumEndpoint:    sumEndpoint,
 		ConcatEndpoint: concatEndpoint,
 	}
-}
+}*/
 
 
