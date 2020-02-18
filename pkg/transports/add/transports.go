@@ -8,6 +8,8 @@ import (
 	"github.com/go-kit/kit/log"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"huzhu_service/pkg/def"
+	"github.com/go-kit/kit/endpoint"
+	"google.golang.org/grpc"
 
 )
 
@@ -29,6 +31,49 @@ func NewGrpcHandler(logger log.Logger,options []grpctransport.ServerOption)map[s
 			)
 
     return handlers;
+}
+
+func NewGRPCClient(conn *grpc.ClientConn,  logger log.Logger)service.AddsvcService{
+
+	// global client middlewares
+	options := []grpctransport.ClientOption{
+		//zipkinClient,
+	}
+	// The Sum endpoint is the same thing, with slightly different
+	// middlewares to demonstrate how to specialize per-endpoint.
+	var sumEndpoint endpoint.Endpoint
+	{
+		sumEndpoint = grpctransport.NewClient(
+			conn,
+			"pb.Addsvc",
+			"Sum",
+			encodeGRPCSumRequest,
+			decodeGRPCSumResponse,
+			pb.SumReply{},
+			options...,
+		).Endpoint()
+	}
+
+	// The Concat endpoint is the same thing, with slightly different
+	// middlewares to demonstrate how to specialize per-endpoint.
+	var concatEndpoint endpoint.Endpoint
+	{
+		concatEndpoint = grpctransport.NewClient(
+			conn,
+			"pb.Addsvc",
+			"Concat",
+			encodeGRPCConcatRequest,
+			decodeGRPCConcatResponse,
+			pb.ConcatReply{},
+			options...,
+		).Endpoint()
+	}
+
+	return endpoints.Endpoints{
+		SumEndpoint:    sumEndpoint,
+		ConcatEndpoint: concatEndpoint,
+	}
+
 }
 
 

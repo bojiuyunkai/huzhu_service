@@ -16,7 +16,6 @@ message EchoRequest {
 }
 
 message EchoReply {
-    int32 Code=1;
     string rs = 2;
     string err = 3;
 }
@@ -27,7 +26,6 @@ message SayHelloRequest {
 }
 
 message SayHelloReply {
-     int32 Code=1;
     string rs = 2;
     string err = 3;
 }

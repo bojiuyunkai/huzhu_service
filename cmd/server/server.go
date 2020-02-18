@@ -141,8 +141,8 @@ func loadConfig(logger log.Logger) (cfg config) {
 	cfg.clientTLS = tls
 	cfg.caCerts = env(envCACerts, defCACerts)
 	cfg.serviceHost = env(envServiceHost, defServiceHost)
-	cfg.httpPort = "8864";
-	cfg.grpcPort = "8866"
+	cfg.httpPort = "8874";
+	cfg.grpcPort = "8876"
 	cfg.serverCert = env(envServerCert, defServerCert)
 	cfg.serverKey = env(envServerKey, defServerKey)
 	cfg.consulHost = env(envConsulHost, defConsulHost)

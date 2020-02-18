@@ -11,6 +11,7 @@ import (
 	 
 	 //"huzhu_service/pb"
 	 //service "huzhu_service/pkg/svc/add"
+	
 
 )
 
@@ -25,8 +26,6 @@ func MakeGRPCServer(logger log.Logger) (*GrpcServer) { // Zipkin GRPC Server Tra
 	}
 	addHandlers:=addtransports.NewGrpcHandler(logger,options);
 	msgHandlers:= msgtransports.NewGrpcHandler(logger,options);
-	
-
 	return &GrpcServer{
 		sum: addHandlers["sum"],
 		concat: addHandlers["concat"],

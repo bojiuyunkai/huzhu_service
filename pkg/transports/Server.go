@@ -4,6 +4,7 @@ import (
 "huzhu_service/pb"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"huzhu_service/pkg/def"
+
 	
 )
 
@@ -28,6 +29,7 @@ func (s *GrpcServer) Sum(ctx context.Context, req *pb.SumRequest) (rep *pb.SumRe
 //主要转发
 func (s *GrpcServer) Concat(ctx context.Context, req *pb.ConcatRequest) (rep *pb.ConcatReply, err error) {
 	_, rp, err := s.concat.ServeGRPC(ctx, req)
+
 	if err != nil {
 		return nil, def.GrpcEncodeError(err)
 	}
@@ -36,7 +38,9 @@ func (s *GrpcServer) Concat(ctx context.Context, req *pb.ConcatRequest) (rep *pb
 }
 //主要转发
 func (s *GrpcServer) Echo(ctx context.Context, req *pb.EchoRequest) (rep *pb.EchoReply, err error) {
+
 	_, rp, err := s.echo.ServeGRPC(ctx, req)
+
 	if err != nil {
 		return nil, def.GrpcEncodeError(err)
 	}
