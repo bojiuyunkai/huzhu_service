@@ -1,6 +1,6 @@
 package add
 
-import service "huzhu_service/pkg/svc/add"
+import def "huzhu_service/pkg/def"
 
 type Request interface {
 	validate() error
@@ -20,10 +20,10 @@ type SumRequest struct {
 
 func (r SumRequest) validate() error {
 	if r.A == 0 && r.B == 0 {
-		return service.ErrTwoZeroes
+		return def.ErrTwoZeroes
 	}
 	if (r.B > 0 && r.A > (intMax-r.B)) || (r.B < 0 && r.A < (intMin-r.B)) {
-		return service.ErrIntOverflow
+		return def.ErrIntOverflow
 	}
 	return nil
 }
@@ -36,7 +36,7 @@ type ConcatRequest struct {
 
 func (r ConcatRequest) validate() error {
 	if len(r.A)+len(r.B) > maxLen {
-		return service.ErrMaxSizeExceeded
+		return def.ErrMaxSizeExceeded
 	}
 	return nil
 }

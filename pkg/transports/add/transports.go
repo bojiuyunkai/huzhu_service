@@ -7,6 +7,7 @@ import (
 	service "huzhu_service/pkg/svc/add"
 	"github.com/go-kit/kit/log"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"huzhu_service/pkg/def"
 
 )
 
@@ -42,7 +43,7 @@ func decodeGRPCSumRequest(_ context.Context, grpcReq interface{}) (interface{}, 
 // user-domain response to a gRPC reply. Primarily useful in a server.
 func encodeGRPCSumResponse(_ context.Context, grpcReply interface{}) (res interface{}, err error) {
 	reply := grpcReply.(endpoints.SumResponse)
-	return &pb.SumReply{Rs: reply.Rs}, grpcEncodeError(reply.Err)
+	return &pb.SumReply{Rs: reply.Rs}, def.GrpcEncodeError(reply.Err)
 }
 
 // decodeGRPCConcatRequest is a transport/grpc.DecodeRequestFunc that converts a
@@ -56,7 +57,7 @@ func decodeGRPCConcatRequest(_ context.Context, grpcReq interface{}) (interface{
 // user-domain response to a gRPC reply. Primarily useful in a server.
 func encodeGRPCConcatResponse(_ context.Context, grpcReply interface{}) (res interface{}, err error) {
 	reply := grpcReply.(endpoints.ConcatResponse)
-	return &pb.ConcatReply{Rs: reply.Rs}, grpcEncodeError(reply.Err)
+	return &pb.ConcatReply{Rs: reply.Rs}, def.GrpcEncodeError(reply.Err)
 }
 
 // encodeGRPCSumRequest is a transport/grpc.EncodeRequestFunc that converts a
