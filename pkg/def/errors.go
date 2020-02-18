@@ -1,4 +1,6 @@
-package message
+package def
+
+
 
 import (
 	"net/http"
@@ -6,8 +8,24 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"google.golang.org/grpc/status"
-	service "huzhu_service/pkg/svc/add"
+	"errors"
 
+
+)
+
+var (
+	// ErrTwoZeroes is an arbitrary business rule for the Add method.
+	ErrTwoZeroes = errors.New("can't sum two zeroes")
+
+	// ErrIntOverflow protects the Add method. We've decided that this error
+	// indicates a misbehaving service and should count against e.g. circuit
+	// breakers. So, we return it directly in endpoints, to illustrate the
+	// difference. In a real service, this probably wouldn't be the case.
+	ErrIntOverflow = errors.New("integer overflow")
+
+	// ErrMaxSizeExceeded protects the Concat method.
+	ErrMaxSizeExceeded = errors.New("result exceeds maximum size")
+	
 )
 
 // HTTPStatusFromCode converts a gRPC error code into the corresponding HTTP response status.
@@ -54,7 +72,7 @@ func HTTPStatusFromCode(code codes.Code) int {
 }
 
 
-func grpcEncodeError(err error) error {
+func GrpcEncodeError(err error) error {
 	if err == nil {
 		return nil
 	}
@@ -64,9 +82,10 @@ func grpcEncodeError(err error) error {
 		return status.Error(st.Code(), st.Message())
 	}
 	switch err {
-	case service.ErrTwoZeroes, service.ErrMaxSizeExceeded, service.ErrIntOverflow:
+	case ErrTwoZeroes, ErrMaxSizeExceeded, ErrIntOverflow:
 		return status.Error(codes.InvalidArgument, err.Error())
 	default:
 		return status.Error(codes.Internal, "internal server error")
 	}
 }
+
