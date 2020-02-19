@@ -10,8 +10,12 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"fmt"
+	"github.com/astaxie/beego/logs"
 )
 
+func init(){
+	logs.SetLogger(logs.AdapterFile,`{"filename":"/tmp/discovery.log","level":7,"maxlines":0,"maxsize":0,"daily":true,"maxdays":10,"color":true}`)
+}
 const (
 	defaultPort = "8500"//consul 默认端口
 )
@@ -26,9 +30,9 @@ var (
 	regexConsul, _ = regexp.Compile("^([A-z0-9.]+)(:[0-9]{1,5})?/(.*)$")
 )
 var logger log.Logger;
-func Init(lg log.Logger) {
-	logger = lg;
-	level.Info(logger).Log("calling", "consul discovery", "init")
+func Init(logger log.Logger) {
+	logger = logger;
+	level.Info(logger).Log("calling", "discovery.go", "method","Init")
 	resolver.Register(NewBuilder())
 }
 
@@ -50,15 +54,13 @@ func NewBuilder() resolver.Builder {
 
 func (cb *consulBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 
-	fmt.Printf("calling consul build\n")
-	fmt.Println("calling consul build")
-	fmt.Println("calling consul build target:",target)
 	host, port, name, err := parseTarget(fmt.Sprintf("%s/%s", target.Authority, target.Endpoint))
-	fmt.Println("host",host,"port",port,"name",name,"err",err)
+	
+	logs.Debug("Build host: ", host)
+	//fmt.Println("host",host,"port",port,"name",name);
 	if err != nil {
 		return nil, err
 	}
-
 	cr := &consulResolver{
 		address:              fmt.Sprintf("%s%s", host, port),
 		name:                 name,
@@ -74,19 +76,18 @@ func (cb *consulBuilder) Build(target resolver.Target, cc resolver.ClientConn, o
 }
 
 func (cr *consulResolver) watcher() {
-	fmt.Printf("calling consul watcher\n")
 	config := api.DefaultConfig()
 	config.Address = cr.address
 	client, err := api.NewClient(config)
 	if err != nil {
-		fmt.Println("error create consul client:",err)
+		//fmt.Println("error create consul client:",err)
 		return
 	}
 
 	for {
-		services, metainfo, err := client.Health().Service(cr.name, cr.name, true, &api.QueryOptions{WaitIndex: cr.lastIndex})
+		services, metainfo, err := client.Health().Service(cr.name, "", true, &api.QueryOptions{WaitIndex: cr.lastIndex})
 		if err != nil {
-			fmt.Println("error retrieving instances from Consul",err)
+			//fmt.Println("error retrieving instances from Consul",err)
 		}
 
 		
@@ -96,8 +97,8 @@ func (cr *consulResolver) watcher() {
 			addr := fmt.Sprintf("%v:%v", service.Service.Address, service.Service.Port)
 			newAddrs = append(newAddrs, resolver.Address{Addr: addr})
 		}
-		fmt.Printf("adding service addrs\n")
-		fmt.Printf("newAddrs: %v\n", newAddrs)
+		//fmt.Printf("adding service addrs\n")
+		//fmt.Printf("newAddrs: %v\n", newAddrs)
 		cr.cc.NewAddress(newAddrs)
 		cr.cc.NewServiceConfig(cr.name)
 	}
@@ -116,11 +117,11 @@ func (cr *consulResolver) Close() {
 
 func parseTarget(target string) (host, port, name string, err error) {
 
-	fmt.Printf("target uri: %v\n", target)
+	//fmt.Printf("target uri: %v\n", target)
 	if target == "" {
 		return "", "", "", errMissingAddr
 	}
-	fmt.Println(regexConsul.MatchString(target));
+	//fmt.Println(regexConsul.MatchString(target));
 	if !regexConsul.MatchString(target) {
 		return "", "", "", errAddrMisMatch
 	}

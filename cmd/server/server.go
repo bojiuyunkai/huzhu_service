@@ -25,57 +25,34 @@ import (
 )
 
 const (
-	defConsulHost     string = ""
-	defConsulPort     string = ""
-	defZipkinV1URL    string = ""
-	defZipkinV2URL    string = ""
-	defLightstepToken string = ""
-	defAppdashAddr    string = ""
-	defNameSpace      string = "gokitconsul"
-	defServiceName    string = "addsvc"
+	defConsulHost     string = "localhost"
+	defConsulPort     string = "8500"
+	defNameSpace      string = "microsoft"
+	defServiceName    string = "micro_service"
 	defLogLevel       string = "error"
 	defServiceHost    string = "localhost"
-	defHTTPPort       string = "8180"
-	defGRPCPort       string = "8181"
-	defServerCert     string = ""
-	defServerKey      string = ""
-	defClientTLS      string = "false"
-	defCACerts        string = ""
-	envConsulHost     string = "QS_CONSULT_HOST"
-	envConsultPort    string = "QS_CONSULT_PORT"
-	envZipkinV1URL    string = "QS_ZIPKIN_V1_URL"
-	envZipkinV2URL    string = "QS_ZIPKIN_V2_URL"
-	envLightstepToken string = "QS_LIGHT_STEP_TOKEN"
-	envAppdashAddr    string = "QS_APPDASH_ADDR"
-	envNameSpace      string = "QS_addsvc_NAMESPACE"
-	envServiceName    string = "QS_addsvc_SERVICE_NAME"
-	envLogLevel       string = "QS_ADDSVC_LOG_LEVEL"
-	envServiceHost    string = "QS_ADDSVC_SERVICE_HOST"
-	envHTTPPort       string = "QS_ADDSVC_HTTP_PORT"
-	envGRPCPort       string = "QS_ADDSVC_GRPC_PORT"
-	envServerCert     string = "QS_ADDSVC_SERVER_CERT"
-	envServerKey      string = "QS_ADDSVC_SERVER_KEY"
-	envClientTLS      string = "QS_ADDSVC_CLIENT_TLS"
-	envCACerts        string = "QS_ADDSVC_CA_CERTS"
+	defHTTPPort       string = "8282"
+	defGRPCPort       string = "8281"
+	envConsulHost     string = "ENV_CONSULE_HOST"
+	envConsultPort    string = "ENV_CONSULE_PORT"
+	envNameSpace      string = "ENV_NAMESPACE"
+	envServiceName    string = "ENV_SERVICE_NAME"
+	envLogLevel       string = "ENV_LOG_LEVEL"
+	envServiceHost    string = "ENV_SERVICE_HOST"
+	envHTTPPort       string = "ENV_HTTP_PORT"
+	envGRPCPort       string = "ENV_GRPC_PORT"
 )
 
 type config struct {
 	nameSpace      string `json:"name_space"`
 	serviceName    string `json:"service_name"`
 	logLevel       string `json:"log_level"`
-	clientTLS      bool   `json:"client_tls"`
-	caCerts        string `json:"ca_certs"`
 	serviceHost    string `json:"service_host"`
 	httpPort       string `json:"http_port"`
 	grpcPort       string `json:"grpc_port"`
-	serverCert     string `json:"server_cert"`
-	serverKey      string `json:"server_key"`
 	consulHost     string `json:"consul_host"`
 	consultPort    string `json:"consult_port"`
-	zipkinV1URL    string `json:"zipkin_v1url"`
-	zipkinV2URL    string `json:"zipkin_v2url"`
-	lightstepToken string `json:"lightstep_token"`
-	appdashAddr    string `json:"appdash_addr"`
+
 }
 
 // Env reads specified environment variable. If no value has been found,
@@ -88,6 +65,7 @@ func env(key string, fallback string) string {
 }
 
 func RunServer() error {
+	//日志
 	var logger log.Logger
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
@@ -96,19 +74,28 @@ func RunServer() error {
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
 	cfg := loadConfig(logger)
-	// consul
+
+	// consul 服务注册
 	{
 		
-			consulAddres := fmt.Sprintf("%s:%s", "127.0.0.1", "8500")
-			grpcPort, _ := strconv.Atoi(cfg.grpcPort)
-			metricsPort, _ := strconv.Atoi(cfg.httpPort)
-			consulReg := consul.NewConsulRegister(consulAddres, "Addsvc", grpcPort, metricsPort, []string{"test","grpc.health.v1.Addsvc"}, logger)
-			svcRegistar, err := consulReg.NewConsulGRPCRegister()
-			fmt.Println(err);
-			defer svcRegistar.Deregister()
-			
-			svcRegistar.Register()
+		consulAddres := fmt.Sprintf("%s:%s", cfg.consulHost, cfg.consultPort)
+		grpcPort, _ := strconv.Atoi(cfg.grpcPort)
+		metricsPort, _ := strconv.Atoi(cfg.httpPort)
+		consulReg := consul.NewConsulRegister(consulAddres,cfg.serviceName, grpcPort, metricsPort, []string{cfg.nameSpace, cfg.serviceName}, logger)
+		svcRegistar, err := consulReg.NewConsulGRPCRegister()
+		defer svcRegistar.Deregister()
 
+		if err != nil {
+				level.Error(logger).Log(
+					"consulAddres", consulAddres,
+					"serviceName", cfg.serviceName,
+					"grpcPort", grpcPort,
+					"metricsPort", metricsPort,
+					"tags", []string{cfg.nameSpace, cfg.serviceName},
+					"err", err,
+				)
+		}
+		svcRegistar.Register()
 	}
 
 	
@@ -130,27 +117,15 @@ func RunServer() error {
 }
 
 func loadConfig(logger log.Logger) (cfg config) {
-	tls, err := strconv.ParseBool(env(envClientTLS, defClientTLS))
-	if err != nil {
-		level.Error(logger).Log("envClientTLS", envClientTLS, "error", err)
-	}
 
 	cfg.nameSpace = env(envNameSpace, defNameSpace)
 	cfg.serviceName = env(envServiceName, defServiceName)
 	cfg.logLevel = env(envLogLevel, defLogLevel)
-	cfg.clientTLS = tls
-	cfg.caCerts = env(envCACerts, defCACerts)
 	cfg.serviceHost = env(envServiceHost, defServiceHost)
-	cfg.httpPort = "8874";
-	cfg.grpcPort = "8876"
-	cfg.serverCert = env(envServerCert, defServerCert)
-	cfg.serverKey = env(envServerKey, defServerKey)
+	cfg.httpPort = env(envHTTPPort, defHTTPPort)
+	cfg.grpcPort = env(envGRPCPort, defGRPCPort)
 	cfg.consulHost = env(envConsulHost, defConsulHost)
 	cfg.consultPort = env(envConsultPort, defConsulPort)
-	cfg.zipkinV1URL = env(envZipkinV1URL, defZipkinV1URL)
-	cfg.zipkinV2URL = env(envZipkinV2URL, defZipkinV2URL)
-	cfg.lightstepToken = env(envLightstepToken, defLightstepToken)
-	cfg.appdashAddr = env(envAppdashAddr, defAppdashAddr)
 	return cfg
 }
 

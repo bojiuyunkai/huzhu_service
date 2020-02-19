@@ -23,12 +23,13 @@ import (
 
 	"huzhu_service/register/consul"
 	service "huzhu_service/pkg/svc/message"
+	"huzhu_service/pb"
 	addS "huzhu_service/pkg/svc/add"
 	transports "huzhu_service/pkg/transports/message"
 	addtransports "huzhu_service/pkg/transports/add"
 )
 	const (
-	target      = "consul://127.0.0.1:8500/grpc.health.v1.Addsvc"
+	target      = "consul://127.0.0.1:8500/microsoft_micro_service"
 	defaultName = "world"
  )
 func main() {
@@ -38,15 +39,19 @@ func main() {
 }
 
 func msgsvc(){
+
+	//file,_:=os.OpenFile("/tmp/log.log",os.O_CREATE|os.O_APPEND,777);
 	var logger log.Logger
 	{
-		logger = log.NewLogfmtLogger(os.Stderr)
-		logger = level.NewFilter(logger, level.AllowInfo())
+		logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+		//logger = log.NewLogfmtLogger(os.Stderr)
+		logger = level.NewFilter(logger, level.AllowAll())
 		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
-
-	
+	logger.Log("foo", "bar") // as normal, no level
+	level.Debug(logger).Log("request_id", 123, "trace_data", 1111)
+	 level.Error(logger).Log("value", 123)
 	
 	var (
 		svc service.MsgsvcService
@@ -63,13 +68,17 @@ func msgsvc(){
 	}
 
 
+	c:=pb.NewMsgsvcClient(conn);
 
+	ctx2, _ := context.WithTimeout(context.Background(), time.Second)
 
+	r, err := c.Echo(ctx2, &pb.EchoRequest{Word: "你妈"})
+	fmt.Println("grpc r,",r,err);
 
 	svc = transports.NewGRPCClient(conn, logger)
 	fmt.Println(svc);
 	
-		ctx2, _ := context.WithTimeout(context.Background(), time.Second)
+		//ctx2, _ := context.WithTimeout(context.Background(), time.Second)
 		v, err := svc.Echo(ctx2, "dfdf")
 		fmt.Println(v);
 }

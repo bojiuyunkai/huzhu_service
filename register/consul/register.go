@@ -1,5 +1,9 @@
+/**
+@author:gaozhanghu
+@date:2020-02-15
+@desc:consul服务注册
+*/
 package consul
-
 import (
 	"fmt"
 	"net"
@@ -11,11 +15,11 @@ import (
 )
 
 type ConsulRegister struct {
-	ConsulAddress                  string   // consul address
-	ServiceName                    string   // service name
-	Tags                           []string // consul tags
-	ServicePort                    int      //service port
-	MetricsPort                    int      //service port
+	ConsulAddress                  string   // consul地址
+	ServiceName                    string   // 服务名
+	Tags                           []string // 标签
+	ServicePort                    int      //服务端口
+	MetricsPort                    int      //Metrics端口
 	DeregisterCriticalServiceAfter time.Duration
 	Interval                       time.Duration
 	logger                         log.Logger
@@ -45,15 +49,11 @@ func (r *ConsulRegister) NewConsulGRPCRegister() (*consulsd.Registrar, error) {
 	}
 	client := consulsd.NewClient(consulClient)
 
-
-
 	IP := localIP()
 
-	str:=fmt.Sprintf("%v:%v/%v", IP, r.ServicePort, r.ServiceName)
-	fmt.Println(str);
 	reg := &api.AgentServiceRegistration{
 		ID:   fmt.Sprintf("%v-%v-%v", r.ServiceName, IP, r.ServicePort),
-		Name: fmt.Sprintf("grpc.health.v1.%v", r.ServiceName),
+		Name: fmt.Sprintf("%s_%s", r.Tags[0],r.ServiceName),
 		Tags: r.Tags,
 		Port: r.ServicePort,
 		Meta: map[string]string{
